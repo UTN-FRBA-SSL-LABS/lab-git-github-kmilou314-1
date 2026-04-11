@@ -424,7 +424,11 @@ _(escribí SI cuando el revert esté pusheado)_
 
 ## Parte IV — Resolver un conflicto
 
-El repositorio ya tiene una branch `feature/conflicto-preparado` que implementa `esPar` de forma diferente a `main`. Cuando intentes mergearla, Git no va a poder resolver la diferencia solo — vas a tener que hacerlo vos.
+En esta parte vamos a forzar un conflicto de forma controlada para practicar su resolución.
+
+> Importante: para que exista conflicto, ambas ramas deben editar la **misma línea** desde una base común.
+
+El repositorio ya tiene una branch `feature/conflicto-demo` que implementa `esPar` de forma diferente a `main`. Cuando intentes mergearla, Git no va a poder resolver la diferencia solo — vas a tener que hacerlo vos.
 
 ---
 
@@ -433,22 +437,46 @@ El repositorio ya tiene una branch `feature/conflicto-preparado` que implementa 
 Un conflicto ocurre cuando dos branches modificaron la misma línea del mismo archivo. Git no sabe cuál versión es la correcta — esa decisión la tiene que tomar un humano.
 
 ```
-main                         →  esPar: return (n % 2) == 0;
-feature/conflicto-preparado  →  esPar: return (n & 1) == 0;
+main                    →  esPar: return (n % 2) == 0; /* version main */
+feature/conflicto-demo  →  esPar: return (n & 1) == 0;
 ```
 
 Ambas implementaciones son correctas. Tenés que elegir cuál conservar (o combinarlas).
 
 ---
 
-### Paso 17 — Traer la branch y mergear
+### Paso 17 — Modificar función esPar
+Primero asegurate de estar en `main` y actualizado:
+
+```bash
+git switch main
+git pull
+```
+
+Editá la misma función para que quede así:
+
+```c
+int esPar(int n) {
+    return (n % 2) == 0; /* version main */
+}
+```
+
+Commit en `main`:
+
+```bash
+git add operaciones.c
+git commit -m "Ajusta esPar en main con comentario de version"
+```
+
+### Paso 18 — Mergear desde origin y provocar el conflicto
+Traé referencias remotas y mergeá la branch preparada:
 
 ```bash
 git fetch origin
-git merge origin/feature/conflicto-preparado
+git merge origin/feature/conflicto-demo
 ```
 
-Git va a reportar un conflicto:
+Git debería reportar un conflicto:
 
 ```
 CONFLICT (content): Merge conflict in operaciones.c
@@ -457,27 +485,27 @@ Automatic merge failed; fix conflicts and then commit the result.
 
 ---
 
-### Paso 18 — Abrir el archivo y entender los markers
+### Paso 19 — Abrir el archivo y entender los markers
 
 Abrí `operaciones.c`. Vas a ver algo así:
 
 ```c
 int esPar(int n) {
 <<<<<<< HEAD
-    return (n % 2) == 0;
+    return (n % 2) == 0; /* version main */
 =======
     return (n & 1) == 0;
->>>>>>> origin/feature/conflicto-preparado
+>>>>>>> origin/feature/conflicto-demo
 }
 ```
 
 - `<<<<<<< HEAD` marca el inicio de **tu versión** (la de main)
 - `=======` separa las dos versiones
-- `>>>>>>> origin/feature/conflicto-preparado` marca el fin de **la versión entrante**
+- `>>>>>>> origin/feature/conflicto-demo` marca el fin de **la versión entrante**
 
 ---
 
-### Paso 19 — Resolver el conflicto
+### Paso 20 — Resolver el conflicto
 
 Editá el archivo para que quede con **una sola versión limpia**, sin los markers. Podés elegir cualquiera de las dos, o combinarlas con un comentario:
 
@@ -498,7 +526,7 @@ make
 
 ---
 
-### Paso 20 — Commitear y pushear la resolución
+### Paso 21 — Commitear y pushear la resolución
 
 ```bash
 git add operaciones.c
